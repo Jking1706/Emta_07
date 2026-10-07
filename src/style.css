@@ -1,0 +1,22 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  background: #121b17;
+}
+
+#app {
+  display: flex;
+  min-height: 100vh;
+  place-items: center;
+  place-content: center;
+}
+
+canvas {
+  display: block;
+}
