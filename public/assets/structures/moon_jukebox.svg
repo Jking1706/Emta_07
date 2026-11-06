@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="48" viewBox="0 0 32 48" shape-rendering="crispEdges">
+ <title>Rocola lunar — pixel art original</title>
+ <path fill="#292337" opacity=".3" d="M2 43h28v5H2z"/>
+ <path fill="#332538" d="M10 1h12v3h5v5h3v35H2V9h3V4h5z"/>
+ <path fill="#d5ae6b" d="M10 4h12v3h4v5h1v29H5V12h1V7h4z"/>
+ <path fill="#8b4661" d="M11 6h10v3h3v5h1v25H7V14h1V9h3z"/>
+ <path fill="#c87277" d="M9 12h2v25H9zM21 12h2v25h-2z"/>
+ <path fill="#302e4c" d="M12 9h8v3h2v11H10V12h2z"/>
+ <path fill="#83c6bd" d="M13 11h6v2h2v6H11v-6h2z"/>
+ <path fill="#e7e2b6" d="M14 12h3v2h-2v3h3v2h-5v-2h-1v-3h2z"/>
+ <path fill="#e6c78c" d="M10 24h12v4H10z"/>
+ <path fill="#4a354a" d="M12 25h2v2h-2zM16 25h2v2h-2zM20 25h1v2h-1zM12 30h8v8h-8z"/>
+ <path fill="#a77778" d="M13 31h6v1h-6zM13 34h6v1h-6zM13 37h6v1h-6z"/>
+ <path fill="#73505a" d="M5 41h22v3H5z"/>
+</svg>

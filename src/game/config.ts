@@ -3,6 +3,7 @@ import { BootScene } from './scenes/BootScene';
 import { FarmScene } from './scenes/FarmScene';
 import { InteriorScene } from './scenes/InteriorScene';
 import { PreloadScene } from './scenes/PreloadScene';
+import { UIScene } from './scenes/UIScene';
 
 export const gameConfig: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -22,5 +23,5 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [BootScene, PreloadScene, FarmScene, InteriorScene],
+  scene: [BootScene, PreloadScene, UIScene, FarmScene, InteriorScene],
 };

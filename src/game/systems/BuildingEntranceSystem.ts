@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { Player } from '../player/Player';
 import { DialogSystem } from './DialogSystem';
 import type { SaveGameData } from './SaveSystem';
+import { WateringCanSystem } from './WateringCanSystem';
+import type { InteractionCandidate } from './InteractionResolver';
 
 type EntranceTarget = {
   sceneKey: string;
@@ -20,26 +22,27 @@ const actionTargets: Record<string, EntranceTarget> = {
 type Zone = Phaser.GameObjects.Zone & { action?: string };
 
 export class BuildingEntranceSystem {
-  private interactKey: Phaser.Input.Keyboard.Key;
   private zones: Zone[] = [];
   private prompt: Phaser.GameObjects.Text;
   private scene: Phaser.Scene;
   private player: Player;
   private dialog: DialogSystem;
   private createSaveGame: () => SaveGameData;
+  private wateringCan: WateringCanSystem;
 
   constructor(
     scene: Phaser.Scene,
     map: Phaser.Tilemaps.Tilemap,
     player: Player,
     dialog: DialogSystem,
+    wateringCan: WateringCanSystem,
     createSaveGame: () => SaveGameData,
   ) {
     this.scene = scene;
     this.player = player;
     this.dialog = dialog;
+    this.wateringCan = wateringCan;
     this.createSaveGame = createSaveGame;
-    this.interactKey = scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.E);
     this.prompt = scene.add
       .text(0, 0, 'E', {
         fontFamily: 'Georgia, serif',
@@ -53,17 +56,13 @@ export class BuildingEntranceSystem {
     this.createZones(map);
   }
 
-  update() {
+  getInteraction(): InteractionCandidate | undefined {
     const zone = this.getActiveZone();
-    this.prompt.setVisible(Boolean(zone));
-
-    if (zone) {
-      this.prompt.setPosition(zone.x - 7, zone.y - 30);
-    }
-
-    if (zone && Phaser.Input.Keyboard.JustDown(this.interactKey)) {
-      this.activate(zone.action ?? '');
-    }
+    this.prompt.setVisible(false);
+    if (!zone) return undefined;
+    return { label: zone.action === 'fill_watering_can' ? 'Llenar regadera' : 'Entrar', priority: 20,
+      distance: Phaser.Math.Distance.Between(this.player.x, this.player.y, zone.x, zone.y),
+      activate: () => this.activate(zone.action ?? '') };
   }
 
   private createZones(map: Phaser.Tilemaps.Tilemap) {
@@ -99,6 +98,7 @@ export class BuildingEntranceSystem {
     }
 
     if (action === 'fill_watering_can') {
+      this.wateringCan.refill();
       this.dialog.show('Llenaste la regadera con agua fria del pozo.');
       return;
     }
@@ -107,13 +107,13 @@ export class BuildingEntranceSystem {
   }
 
   private getActiveZone() {
-    return this.zones.find((zone) => {
+    return this.zones.filter((zone) => {
       return Phaser.Geom.Rectangle.Contains(
         zone.getBounds(),
         this.player.sprite.x,
         this.player.sprite.y,
       );
-    });
+    }).sort((a, b) => Phaser.Math.Distance.Between(a.x, a.y, this.player.x, this.player.y) - Phaser.Math.Distance.Between(b.x, b.y, this.player.x, this.player.y))[0];
   }
 
   private readAction(properties?: Phaser.Types.Tilemaps.TiledObject['properties']) {

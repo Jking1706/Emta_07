@@ -1,9 +1,15 @@
 import Phaser from 'phaser';
 import { crops } from '../data/crops';
+import { actionEnergy, cropBalance } from '../data/balance';
 import { getItemById, type CropId } from '../data/items';
 import { Player } from '../player/Player';
 import { DialogSystem } from './DialogSystem';
+import { EnergySystem } from './EnergySystem';
 import { InventorySystem } from './InventorySystem';
+import { WateringCanSystem } from './WateringCanSystem';
+import { ProgressionSystem } from './ProgressionSystem';
+import { SoundFeedback } from './SoundFeedback';
+import type { InteractionCandidate } from './InteractionResolver';
 
 type FarmTile = {
   tile: Phaser.Tilemaps.Tile;
@@ -17,15 +23,16 @@ type CropState = {
   wateredToday: boolean;
   waterCount: number;
   ready: boolean;
-  body: Phaser.GameObjects.Rectangle;
+  sprite: Phaser.GameObjects.Image;
   marker: Phaser.GameObjects.Text;
 };
 
-type SavedCropState = Omit<CropState, 'body' | 'marker'>;
+type SavedCropState = Omit<CropState, 'sprite' | 'marker'>;
 
 export type FarmingSnapshot = {
   tilledTiles: string[];
   crops: SavedCropState[];
+  lastProcessedDay?: number;
 };
 
 export class FarmingSystem {
@@ -33,10 +40,13 @@ export class FarmingSystem {
   private farmLayers: Phaser.Tilemaps.TilemapLayer[];
   private player: Player;
   private inventory: InventorySystem;
+  private energy: EnergySystem;
+  private wateringCan: WateringCanSystem;
   private dialog: DialogSystem;
   private getCurrentDay: () => number;
   private tilledTiles = new Set<string>();
-  private soilViews = new Map<string, Phaser.GameObjects.Rectangle>();
+  private soilViews = new Map<string, Phaser.GameObjects.Image>();
+  private progression: ProgressionSystem;
   private crops = new Map<string, CropState>();
   private highlight: Phaser.GameObjects.Graphics;
   private lastProcessedDay: number;
@@ -46,21 +56,28 @@ export class FarmingSystem {
     farmLayers: Phaser.Tilemaps.TilemapLayer[],
     player: Player,
     inventory: InventorySystem,
+    energy: EnergySystem,
+    wateringCan: WateringCanSystem,
     dialog: DialogSystem,
     getCurrentDay: () => number,
     savedState?: FarmingSnapshot,
+    progression = new ProgressionSystem(),
   ) {
     this.scene = scene;
+    this.progression = progression;
     this.farmLayers = farmLayers;
     this.player = player;
     this.inventory = inventory;
+    this.energy = energy;
+    this.wateringCan = wateringCan;
     this.dialog = dialog;
     this.getCurrentDay = getCurrentDay;
-    this.lastProcessedDay = getCurrentDay();
+    this.lastProcessedDay = savedState?.lastProcessedDay ?? getCurrentDay();
     this.highlight = scene.add.graphics().setDepth(30);
     this.loadSnapshot(savedState);
 
     scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      if (this.dialog.isActive || scene.data.get('uiBlocked')) return;
       if (pointer.y > scene.scale.height - 92) {
         return;
       }
@@ -78,9 +95,27 @@ export class FarmingSystem {
     this.drawHighlight();
   }
 
+  addFarmLayer(layer: Phaser.Tilemaps.TilemapLayer) {
+    if (!this.farmLayers.includes(layer)) {
+      this.farmLayers.push(layer);
+    }
+  }
+
+  getInteraction(): InteractionCandidate | undefined {
+    if (!this.inventory.getItemCount('sickle')) return undefined;
+    const crop = [...this.crops.values()].filter(c => c.ready)
+      .map(c => ({ crop: c, distance: Phaser.Math.Distance.Between(this.player.x, this.player.y, c.sprite.x, c.sprite.y) }))
+      .filter(c => c.distance <= 24).sort((a, b) => a.distance - b.distance)[0];
+    if (!crop) return undefined;
+    return { label: 'Cosechar', distance: crop.distance, priority: 5, activate: () => {
+      if (this.harvestTile(crop.crop.tileKey)) this.spendEnergy(this.progression.energyCost('sickle'));
+    } };
+  }
+
   getSnapshot(): FarmingSnapshot {
     return {
       tilledTiles: [...this.tilledTiles],
+      lastProcessedDay: this.lastProcessedDay,
       crops: [...this.crops.values()].map((crop) => ({
         tileKey: crop.tileKey,
         cropId: crop.cropId,
@@ -109,79 +144,144 @@ export class FarmingSystem {
     const tileKey = this.getTileKey(farmTile);
 
     if (selectedItem.id === 'hoe') {
-      this.tillTile(farmTile, tileKey);
+      if (this.tillTile(farmTile, tileKey)) {
+        this.spendEnergy(this.progression.energyCost('hoe'));
+      }
       return;
     }
 
     if (selectedItem.id === 'wateringCan') {
-      this.waterTile(tileKey);
+      if (this.waterTile(tileKey)) {
+        this.spendEnergy(this.progression.energyCost('wateringCan'));
+        this.wateringCan.useWater();
+      }
       return;
     }
 
     if (selectedItem.id === 'sickle') {
-      this.harvestTile(tileKey);
+      if (this.harvestTile(tileKey)) {
+        this.spendEnergy(this.progression.energyCost('sickle'));
+      }
       return;
     }
 
     if (selectedItem.type === 'seed' && selectedItem.cropId) {
-      this.plantSeed(farmTile, tileKey, selectedItem.cropId, currentDay);
+      if (this.plantSeed(farmTile, tileKey, selectedItem.cropId, currentDay)) {
+        this.spendEnergy(actionEnergy.plant);
+      }
     }
   }
 
   private tillTile(farmTile: FarmTile, tileKey: string) {
     if (this.tilledTiles.has(tileKey) || this.crops.has(tileKey)) {
-      return;
+      return false;
+    }
+
+    if (!this.energy.canSpend(this.progression.energyCost('hoe'))) {
+      this.dialog.show('Estas demasiado cansada para arar.');
+      return false;
     }
 
     this.tilledTiles.add(tileKey);
     this.soilViews.set(tileKey, this.createSoilView(farmTile.tile));
+    this.progression.record('till');
+    this.feedback(farmTile.tile.getCenterX(), farmTile.tile.getCenterY(), 0xb88b60);
+    SoundFeedback.play(this.scene, 'tool');
+    return true;
   }
 
   private plantSeed(farmTile: FarmTile, tileKey: string, cropId: CropId, currentDay: number) {
     if (!this.tilledTiles.has(tileKey) || this.crops.has(tileKey)) {
-      return;
+      return false;
+    }
+
+    if (!this.energy.canSpend(actionEnergy.plant)) {
+      this.dialog.show('Necesitas descansar antes de sembrar.');
+      return false;
     }
 
     if (!this.inventory.removeOneFromSelectedSlot()) {
-      return;
+      return false;
     }
 
     this.crops.set(tileKey, this.createCropState(farmTile.tile, tileKey, cropId, currentDay, 0, false));
+    this.progression.record('plant');
+    this.feedback(farmTile.tile.getCenterX(), farmTile.tile.getCenterY(), 0x9cbf71);
+    SoundFeedback.play(this.scene, 'tool');
+    return true;
   }
 
   private waterTile(tileKey: string) {
     const crop = this.crops.get(tileKey);
 
     if (!crop || crop.ready || crop.wateredToday) {
-      return;
+      return false;
+    }
+
+    if (!this.energy.canSpend(this.progression.energyCost('wateringCan'))) {
+      this.dialog.show('Estas demasiado cansada para regar.');
+      return false;
+    }
+
+    if (!this.wateringCan.hasWater()) {
+      this.dialog.show('La regadera esta vacia. Busca el pozo.');
+      return false;
     }
 
     crop.wateredToday = true;
-    crop.marker.setText('');
+    this.soilViews.get(tileKey)?.setTexture('soil-wet');
+    this.progression.record('water');
+    this.feedback(crop.sprite.x, crop.sprite.y, 0x80ccdf);
+    SoundFeedback.play(this.scene, 'water');
+    this.refreshCropView(crop, this.getCurrentDay());
     this.dialog.show('La tierra bebe con un suspiro bajo.');
+    return true;
   }
 
   private harvestTile(tileKey: string) {
     const crop = this.crops.get(tileKey);
 
     if (!crop || !crop.ready) {
-      return;
+      return false;
+    }
+
+    if (!this.energy.canSpend(this.progression.energyCost('sickle'))) {
+      this.dialog.show('Necesitas descansar antes de cosechar.');
+      return false;
     }
 
     const cropData = crops[crop.cropId];
 
-    if (!this.inventory.addItem(cropData.harvestItemId, 1)) {
-      this.dialog.show('No hay espacio en la hotbar.');
-      return;
+    if (!this.inventory.addItem(cropData.harvestItemId, cropBalance[crop.cropId].yield)) {
+      this.dialog.show('Mochila llena. Guarda objetos en el cofre de casa; el cultivo seguirá aquí.');
+      return false;
     }
 
-    crop.body.destroy();
+    this.feedback(crop.sprite.x, crop.sprite.y, 0xe9c878);
+    crop.sprite.destroy();
     crop.marker.destroy();
     this.crops.delete(tileKey);
     this.tilledTiles.delete(tileKey);
     this.soilViews.get(tileKey)?.destroy();
     this.soilViews.delete(tileKey);
+    this.progression.record('harvest');
+    SoundFeedback.play(this.scene, 'reward');
     this.dialog.show(`${cropData.name} cosechado.`);
+    return true;
+  }
+
+  private spendEnergy(amount: number) {
+    this.energy.spend(amount);
+  }
+
+  private feedback(x: number, y: number, tint: number) {
+    this.player.playToolAction();
+    const emitter = this.scene.add.particles(x, y, 'sparkle-particle', {
+      emitting: false, lifespan: 380, speed: { min: 12, max: 30 }, gravityY: 45,
+      scale: { start: .65, end: 0 }, alpha: { start: .8, end: 0 }, tint,
+    }).setDepth(y + 2);
+    emitter.explode(7);
+    this.scene.time.delayedCall(450, () => emitter.destroy());
   }
 
   private processNewDay(currentDay: number) {
@@ -195,6 +295,7 @@ export class FarmingSystem {
       }
 
       crop.wateredToday = false;
+      this.soilViews.get(crop.tileKey)?.setTexture('soil-dry');
       this.refreshCropView(crop, currentDay);
     });
   }
@@ -202,10 +303,10 @@ export class FarmingSystem {
   private refreshCropView(crop: CropState, currentDay: number) {
     const cropData = crops[crop.cropId];
     crop.ready = crop.waterCount >= cropData.growthDays;
-    const stageIndex = Math.min(crop.waterCount, cropData.colors.length - 1);
-    crop.body.setFillStyle(cropData.colors[stageIndex]);
-    crop.body.setSize(10 + stageIndex * 5, 8 + stageIndex * 5);
-    crop.marker.setText(crop.ready ? '!' : crop.wateredToday ? '' : '~');
+    const stageIndex = Math.min(cropData.stageCount - 1,
+      Math.floor(crop.waterCount / cropData.growthDays * (cropData.stageCount - 1)));
+    crop.sprite.setFrame(stageIndex);
+    crop.marker.setText(crop.ready ? '!' : crop.wateredToday ? '.' : '~');
 
     if (crop.ready && currentDay > crop.plantedDay) {
       crop.marker.setColor('#f0b35a');
@@ -214,6 +315,7 @@ export class FarmingSystem {
 
   private drawHighlight() {
     this.highlight.clear();
+    if (this.dialog.isActive || this.scene.data.get('uiBlocked')) return;
     const tile = this.getPointedFarmTile(this.scene.input.activePointer);
 
     if (!tile) {
@@ -234,17 +336,19 @@ export class FarmingSystem {
     wateredToday: boolean,
   ): CropState {
     const cropData = crops[cropId];
-    const body = this.scene.add
-      .rectangle(tile.getCenterX(), tile.getCenterY() - 3, 10, 8, cropData.colors[0])
-      .setDepth(18);
+    const rootY = tile.getCenterY() + 6;
+    const sprite = this.scene.add
+      .image(tile.getCenterX(), rootY, cropData.textureKey, 0)
+      .setOrigin(0.5, 22 / 24)
+      .setDepth(rootY);
     const marker = this.scene.add
       .text(tile.getCenterX() + 6, tile.getCenterY() - 18, '~', {
         fontFamily: 'Georgia, serif',
-        fontSize: '13px',
+         fontSize: '9px',
         color: '#8fb0d8',
       })
       .setOrigin(0.5)
-      .setDepth(19);
+      .setDepth(rootY + 1);
     const crop: CropState = {
       tileKey,
       cropId,
@@ -252,7 +356,7 @@ export class FarmingSystem {
       wateredToday,
       waterCount,
       ready: false,
-      body,
+      sprite,
       marker,
     };
     this.refreshCropView(crop, plantedDay);
@@ -261,7 +365,7 @@ export class FarmingSystem {
 
   private createSoilView(tile: Phaser.Tilemaps.Tile) {
     return this.scene.add
-      .rectangle(tile.getCenterX(), tile.getCenterY(), tile.width - 5, tile.height - 5, 0x3a2b25, 0.86)
+      .image(tile.getCenterX(), tile.getCenterY(), 'soil-dry')
       .setDepth(12);
   }
 
@@ -296,7 +400,9 @@ export class FarmingSystem {
         savedCrop.waterCount,
         savedCrop.wateredToday,
       );
-      crop.ready = savedCrop.ready;
+      if (savedCrop.wateredToday) {
+        this.soilViews.get(savedCrop.tileKey)?.setTexture('soil-wet');
+      }
       this.crops.set(savedCrop.tileKey, crop);
     });
   }

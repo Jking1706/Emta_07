@@ -1,4 +1,5 @@
 import type { CropId, ItemId } from './items';
+import { cropBalance } from './balance';
 
 export type CropData = {
   id: CropId;
@@ -6,7 +7,8 @@ export type CropData = {
   seedItemId: ItemId;
   harvestItemId: ItemId;
   growthDays: number;
-  colors: readonly [number, number, number];
+  textureKey: string;
+  stageCount: number;
 };
 
 export const crops: Record<CropId, CropData> = {
@@ -15,15 +17,17 @@ export const crops: Record<CropId, CropData> = {
     name: 'Nabo palido',
     seedItemId: 'paleTurnipSeed',
     harvestItemId: 'paleTurnip',
-    growthDays: 2,
-    colors: [0x817b65, 0xb8ad85, 0xe4d6aa],
+    growthDays: cropBalance.paleTurnip.growthDays,
+    textureKey: 'pale_turnip_stages',
+    stageCount: 3,
   },
   blackPumpkin: {
     id: 'blackPumpkin',
     name: 'Calabaza negra',
     seedItemId: 'blackPumpkinSeed',
     harvestItemId: 'blackPumpkin',
-    growthDays: 3,
-    colors: [0x342136, 0x5b2c46, 0x8f4a28],
+    growthDays: cropBalance.blackPumpkin.growthDays,
+    textureKey: 'black_pumpkin_stages',
+    stageCount: 4,
   },
 };

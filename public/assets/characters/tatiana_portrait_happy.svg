@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 64 64" shape-rendering="crispEdges">
+  <title>Tatiana — retrato original, expresión alegre</title>
+  <!-- Original pixel illustration. Transparent background, 64 x 64 logical pixels. -->
+  <path fill="#191523" d="M23 5h18v3h6v5h4v9h2v26h-5v6H16v-6h-5V22h2v-9h4V8h6z"/>
+  <path fill="#382637" d="M23 8h18v3h6v11h3v23h-6v7H19v-7h-5V22h3V13h6z"/>
+  <path fill="#65404a" d="M23 9h16v3H24v4h-5v13h-3V17h3v-5h4zM44 18h3v22h-3zM17 34h3v12h-3z"/>
+  <path fill="#a56b61" d="M22 21h22v15h-3v6h-5v10H27V42h-5v-6h-3V25h3z"/>
+  <path fill="#e4a783" d="M23 19h18v5h3v10h-3v5h-5v4h-9v-4h-5v-7h-2v-7h3z"/>
+  <path fill="#f5c49a" d="M26 21h12v4h3v9h-3v4H27v-4h-4v-8h3z"/>
+  <path fill="#382637" d="M22 14h19v4h4v7h-6v-4h-8v-3h-4v6h-7v7h-4V20h6z"/>
+  <path fill="#81515a" d="M25 13h13v2H25zM20 18h3v5h-3z"/>
+  <path fill="#53313e" d="M24 26h5v2h-5zM35 26h5v2h-5z"/>
+  <path fill="#241e2d" d="M25 29h3v4h-3zM36 29h3v4h-3z"/>
+  <path fill="#fff0ce" d="M25 29h1v1h-1zM36 29h1v1h-1z"/>
+  <path fill="#cf7c78" d="M23 34h5v2h-5zM37 34h5v2h-5z"/>
+  <path fill="#bb7967" d="M32 32h2v3h-2z"/>
+  <path fill="#874451" d="M29 37h7v2h-7z"/>
+  <path fill="#fff0ce" d="M30 37h5v1h-5z"/>
+  <path fill="#e4a783" d="M29 42h6v6h-6z"/>
+  <path fill="#191523" d="M24 46h5v3h6v-3h6v3h7v4h5v10H11V53h5v-4h8z"/>
+  <path fill="#5b476a" d="M18 51h7v-2h3v4h8v-4h4v2h6v4h4v8H14v-8h4z"/>
+  <path fill="#846280" d="M18 53h6v3h-7v7h-3v-8h4zM39 52h5v3h-5z"/>
+  <path fill="#332b46" d="M25 53h3v3h8v-3h3v10H25z"/>
+  <path fill="#d9b873" d="M28 48h2v3h4v-3h2v5h-3v3h-2v-3h-3zM45 17h2v7h-2zM43 19h6v3h-6z"/>
+  <path fill="#fff0ce" d="M45 19h2v2h-2zM31 53h2v2h-2z"/>
+</svg>

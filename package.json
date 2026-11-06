@@ -4,15 +4,21 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "test:e2e": "playwright test",
+    "assets:player": "node scripts/build-player-sheet.mjs",
+    "dev": "node log.js dev & vite --config vite/config.dev.mjs",
+    "build": "tsc && node log.js build & vite build --config vite/config.prod.mjs",
+    "dev-nolog": "vite --config vite/config.dev.mjs",
+    "build-nolog": "tsc && vite build --config vite/config.prod.mjs",
+    "preview": "vite preview --config vite/config.prod.mjs"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "typescript": "~6.0.2",
     "vite": "^8.3.0"
   },
   "dependencies": {
-    "phaser": "^3.90.0"
+    "phaser": "^3.90.0",
+    "terser": "^5.39.0"
   }
 }

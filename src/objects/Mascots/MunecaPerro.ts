@@ -7,6 +7,7 @@ export class MunecaPerro extends Phaser.Physics.Arcade.Sprite {
   state: MunecaState = 'IDLE';
 
   private speechCooldown = false;
+  private hopCooldown = false;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'dog', 0);
@@ -22,7 +23,20 @@ export class MunecaPerro extends Phaser.Physics.Arcade.Sprite {
     const body = this.body as Phaser.Physics.Arcade.Body;
     const distance = Phaser.Math.Distance.Between(this.x, this.y, player.sprite.x, player.sprite.y);
 
-    if (distance > 60) {
+    if (distance < 60) {
+      this.state = 'HAPPY';
+      this.play('muneca_run', true);
+      this.scene.physics.moveToObject(this, player.sprite, 96);
+
+      if (!this.hopCooldown) {
+        this.hopCooldown = true;
+        this.setVelocityY(-70);
+        this.scene.time.delayedCall(180, () => this.setVelocityY(0));
+        this.scene.time.delayedCall(1200, () => {
+          this.hopCooldown = false;
+        });
+      }
+    } else if (distance > 80) {
       this.state = 'FOLLOW';
       this.scene.physics.moveToObject(this, player.sprite, 72);
       this.play('muneca_run', true);
@@ -48,7 +62,7 @@ export class MunecaPerro extends Phaser.Physics.Arcade.Sprite {
     this.state = 'HAPPY';
     this.play('muneca_run', true);
     this.setVelocityY(-55);
-    showBubble(this.x, this.y - 26, 'Woof!');
+    showBubble(this.x, this.y - 26, 'Woof! <3');
     this.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => this.play('muneca_idle', true));
     this.scene.time.delayedCall(750, () => {
       this.setVelocityY(0);

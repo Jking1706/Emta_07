@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="72" height="32" viewBox="0 0 72 32" shape-rendering="crispEdges">
+ <title>Banco del mirador — pixel art original</title>
+ <path fill="#292337" opacity=".25" d="M3 26h66v5H3z"/>
+ <path fill="#463b47" d="M10 4h5v25h-5zM57 4h5v25h-5z"/>
+ <path fill="#694838" d="M5 3h62v6H5zM5 11h62v6H5zM3 19h66v7H3z"/>
+ <path fill="#d5a16a" d="M6 3h60v2H6zM6 11h60v2H6zM4 19h64v2H4z"/>
+ <path fill="#ae784d" d="M6 5h60v2H6zM6 13h60v2H6zM4 21h64v2H4z"/>
+ <path fill="#80563e" d="M21 5h12v1H21zM42 13h10v1H42zM15 21h9v1h-9z"/>
+ <path fill="#ece0b1" d="M11 6h2v2h-2zM58 6h2v2h-2zM11 14h2v2h-2zM58 14h2v2h-2z"/>
+ <path fill="#463b47" d="M1 16h4v9H1zM67 16h4v9h-4z"/>
+</svg>

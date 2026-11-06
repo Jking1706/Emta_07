@@ -18,15 +18,15 @@ export class InventorySystem {
 
   private changeCallbacks: Array<() => void> = [];
 
-  constructor() {
-    this.slots = Array.from({ length: hotbarSlotCount }, () => ({
+  constructor(capacity = 24) {
+    this.slots = Array.from({ length: capacity }, () => ({
       itemId: null,
       quantity: 0,
     }));
   }
 
   selectSlot(index: number) {
-    if (index < 0 || index >= this.slots.length) {
+    if (!Number.isInteger(index) || index < 0 || index >= Math.min(hotbarSlotCount, this.slots.length)) {
       return;
     }
 
@@ -39,6 +39,7 @@ export class InventorySystem {
   }
 
   addItem(itemId: ItemId, quantity = 1) {
+    if (!this.canAdd(itemId, quantity)) return false;
     const maxStack = getItemById(itemId).maxStack;
     let remaining = quantity;
 
@@ -77,6 +78,27 @@ export class InventorySystem {
     return false;
   }
 
+  canAdd(itemId: ItemId, quantity: number) {
+    const max = getItemById(itemId).maxStack;
+    return Number.isInteger(quantity) && quantity > 0 && this.slots.reduce((n, slot) =>
+      n + (slot.itemId === null ? max : slot.itemId === itemId ? max - slot.quantity : 0), 0) >= quantity;
+  }
+
+  transferTo(index: number, destination: InventorySystem) {
+    const slot = this.slots[index];
+    if (!slot?.itemId || destination === this || !destination.addItem(slot.itemId, slot.quantity)) return false;
+    slot.itemId = null;
+    slot.quantity = 0;
+    this.notifyChange();
+    return true;
+  }
+
+  swapSlots(from: number, to: number) {
+    if (!this.slots[from] || !this.slots[to]) return;
+    [this.slots[from], this.slots[to]] = [this.slots[to], this.slots[from]];
+    this.notifyChange();
+  }
+
   removeOneFromSelectedSlot() {
     const slot = this.getSelectedSlot();
 
@@ -94,6 +116,44 @@ export class InventorySystem {
     return true;
   }
 
+  removeOneItem(itemId: ItemId) {
+    const slot = this.slots.find((savedSlot) => savedSlot.itemId === itemId && savedSlot.quantity > 0);
+
+    if (!slot) {
+      return false;
+    }
+
+    slot.quantity--;
+
+    if (slot.quantity === 0) {
+      slot.itemId = null;
+    }
+
+    this.notifyChange();
+    return true;
+  }
+
+  getItemCount(itemId: ItemId) {
+    return this.slots.reduce((total, slot) => total + (slot.itemId === itemId ? slot.quantity : 0), 0);
+  }
+
+  hasItems(items: Array<{ itemId: ItemId; quantity: number }>) {
+    return items.every((item) => this.getItemCount(item.itemId) >= item.quantity);
+  }
+
+  removeItems(items: Array<{ itemId: ItemId; quantity: number }>) {
+    if (!this.hasItems(items)) {
+      return false;
+    }
+
+    items.forEach((item) => {
+      for (let index = 0; index < item.quantity; index++) {
+        this.removeOneItem(item.itemId);
+      }
+    });
+    return true;
+  }
+
   getSnapshot(): InventorySnapshot {
     return {
       slots: this.slots.map((slot) => ({ ...slot })),
@@ -102,6 +162,7 @@ export class InventorySystem {
   }
 
   loadSnapshot(snapshot: InventorySnapshot) {
+    this.slots.forEach(slot => { slot.itemId = null; slot.quantity = 0; });
     snapshot.slots.forEach((slot, index) => {
       if (!this.slots[index]) {
         return;
@@ -110,7 +171,7 @@ export class InventorySystem {
       this.slots[index].itemId = slot.itemId;
       this.slots[index].quantity = slot.quantity;
     });
-    this.selectedSlotIndex = snapshot.selectedSlotIndex;
+    this.selectedSlotIndex = Math.min(Math.max(snapshot.selectedSlotIndex, 0), hotbarSlotCount - 1);
     this.notifyChange();
   }
 

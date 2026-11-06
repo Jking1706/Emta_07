@@ -10,7 +10,9 @@ export type ItemId =
   | 'chocoSoda'
   | 'strawberry'
   | 'sourGummy'
-  | 'effervescentMagnesium';
+  | 'effervescentMagnesium'
+  | 'moonTruffle'
+  | 'pumpkinStew';
 export type CropId = 'paleTurnip' | 'blackPumpkin';
 
 export type GameItem = {
@@ -90,7 +92,47 @@ export const items: Record<ItemId, GameItem> = {
     type: 'medicine',
     maxStack: 99,
   },
+  moonTruffle: {
+    id: 'moonTruffle',
+    name: 'Trufa lunar',
+    type: 'snack',
+    maxStack: 99,
+  },
+  pumpkinStew: {
+    id: 'pumpkinStew',
+    name: 'Guiso de calabaza negra',
+    type: 'snack',
+    maxStack: 99,
+  },
 };
+
+export type Recipe = {
+  id: string;
+  name: string;
+  result: ItemId;
+  ingredients: Array<{ itemId: ItemId; quantity: number }>;
+};
+
+export const recipes: Recipe[] = [
+  {
+    id: 'moonTruffle',
+    name: 'Trufas de luna y fresa',
+    result: 'moonTruffle',
+    ingredients: [
+      { itemId: 'strawberry', quantity: 1 },
+      { itemId: 'chocoSoda', quantity: 1 },
+    ],
+  },
+  {
+    id: 'pumpkinStew',
+    name: 'Guiso oscuro de calabaza',
+    result: 'pumpkinStew',
+    ingredients: [
+      { itemId: 'blackPumpkin', quantity: 1 },
+      { itemId: 'paleTurnip', quantity: 1 },
+    ],
+  },
+];
 
 export const startingItems: Array<{ itemId: ItemId; quantity: number }> = [
   { itemId: 'hoe', quantity: 1 },

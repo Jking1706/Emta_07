@@ -45,6 +45,8 @@ export class TimeSystem {
     this.lastUpdateTime = null;
   }
 
+  pauseAt(time: number) { this.lastUpdateTime = time; }
+
   getSnapshot(): TimeSnapshot {
     return {
       day: this.day,

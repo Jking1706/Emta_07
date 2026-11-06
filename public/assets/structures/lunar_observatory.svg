@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="88" viewBox="0 0 96 88" shape-rendering="crispEdges">
+ <title>Observatorio lunar — pixel art original</title>
+ <path fill="#292337" opacity=".3" d="M8 76h76v8H8z"/>
+ <path fill="#3b3044" d="M14 36h62v42H14z"/>
+ <path fill="#bfa596" d="M18 40h54v34H18z"/>
+ <path fill="#967c7d" d="M60 40h12v34H60zM18 56h54v2H18zM18 66h54v2H18z"/>
+ <path fill="#e1c6a8" d="M20 43h13v2H20zM37 43h14v2H37zM24 59h14v2H24zM48 69h10v2H48z"/>
+ <path fill="#756175" d="M33 48h2v8h-2zM53 48h2v8h-2zM41 58h2v8h-2zM26 68h2v6h-2z"/>
+ <path fill="#253448" d="M10 32h4V22h6V14h8V8h12V4h14v4h10v6h8v8h4v10h4v8H10z"/>
+ <path fill="#4e7b8a" d="M16 32V24h6V16h8v-5h12V8h10v3h10v5h8v8h4v8z"/>
+ <path fill="#76a6a4" d="M22 24v-6h9v-5h10v-3h4v5H34v6h-7v9h-5z"/>
+ <path fill="#345468" d="M50 10h5v22h-5zM63 19h4v13h-4z"/>
+ <path fill="#162a40" d="M43 8h7v24h-7z"/>
+ <path fill="#c3b99c" d="M11 33h68v4H11z"/>
+ <path fill="#3b3044" d="M25 52h18v24H25zM54 46h12v14H54z"/>
+ <path fill="#664956" d="M28 55h12v19H28z"/>
+ <path fill="#b8e4d6" d="M56 48h8v10h-8z"/>
+ <path fill="#4e7b8a" d="M59 48h2v10h-2zM56 52h8v2h-8z"/>
+ <path fill="#edc77d" d="M37 63h2v3h-2zM48 42h3v7h-3zM46 44h7v3h-7z"/>
+ <path fill="#73677c" d="M22 75h24v4H22zM19 79h30v3H19z"/>
+ <path fill="#253448" d="M62 26h8v-4h8v-4h10v-4h6v14h-8v4h-8v4H62z"/>
+ <path fill="#8aa6ae" d="M65 28h8v-4h8v-4h9v6h-8v4h-8v3h-9z"/>
+ <path fill="#e5d6ae" d="M88 16h4v12h-4z"/>
+ <path fill="#b8e7ed" d="M91 18h3v8h-3z"/>
+</svg>

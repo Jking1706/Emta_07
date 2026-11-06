@@ -10,7 +10,14 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+test-results/
+playwright-report/
 *.local
+
+# Local reference material and assistant configuration
+original-reference/
+.opencode/
+opencode.json
 
 # Editor directories and files
 .vscode/*
